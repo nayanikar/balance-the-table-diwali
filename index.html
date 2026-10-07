@@ -178,12 +178,15 @@
   rsvp1.addEventListener('rsvp:committed', async (e) => {
     const { data, status } = e.detail;
     if (data) handlePostResult(ctx, data);
-    await refreshBoot(ctx);
     if (status === 'declined') {
+      await refreshBoot(ctx);
       setStep(1);
       return;
     }
-    if (status === 'attending') goToStep2AfterName();
+    if (status === 'attending') {
+      goToStep2AfterName();
+      void refreshBoot(ctx);
+    }
   });
 
   rsvp1.addEventListener('rsvp:not-you', async () => {
@@ -205,7 +208,8 @@
 
   btt.addEventListener('btt:complete', (e) => {
     details3.setCompletion(e.detail);
-    void refreshBoot(ctx).then(() => goToStep3WithFinale());
+    goToStep3WithFinale();
+    void refreshBoot(ctx);
   });
 
   btt.addEventListener('btt:saved', (e) => {

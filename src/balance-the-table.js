@@ -16,6 +16,7 @@ import {
   updatePlateScene,
 } from './plate-scene.js';
 import { setStepNavState, stepNavHtml } from './step-nav.js';
+import { getGuestId } from './guest.js';
 
 const STYLE_URL = new URL('./styles.css', import.meta.url).href;
 /** @type {string|undefined} */
@@ -182,6 +183,14 @@ class BalanceTheTable extends HTMLElement {
     if (name === 'step-label') {
       const el = this.#$('.step-label');
       if (el) el.textContent = value || '';
+      return;
+    }
+    if (name === 'guest-id' && value) {
+      this.#guestId = value;
+      return;
+    }
+    if (name === 'api' && value?.trim() && !this.#bootHydrated) {
+      void this.#loadInitial();
     }
   }
 
@@ -208,17 +217,7 @@ class BalanceTheTable extends HTMLElement {
   #resolveGuestId() {
     const attr = this.getAttribute('guest-id');
     if (attr) return attr;
-    try {
-      const key = this.#storageKeyGuest();
-      let id = localStorage.getItem(key);
-      if (!id) {
-        id = randomGuestId();
-        localStorage.setItem(key, id);
-      }
-      return id;
-    } catch {
-      return randomGuestId();
-    }
+    return getGuestId(this.#eventId());
   }
 
   /** @returns {{ side: string; dishName: string|null; icon: string }|null} */
@@ -251,6 +250,11 @@ class BalanceTheTable extends HTMLElement {
     this.#bootHydrated = true;
     this.#loadAbort?.abort();
     this.#attendingCount = people?.attending ?? 0;
+
+    if (this.#phase === 'dropping' || this.#phase === 'settled') {
+      return;
+    }
+
     this.#loadError = Boolean(loadError);
     if (this.#loadError) {
       this.#dishes = { sav: [], swt: [] };
