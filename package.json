@@ -1,0 +1,17 @@
+{
+  "name": "balance-the-table",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 3456",
+    "dev:mock": "node scripts/mock-api.mjs",
+    "dev:all": "node scripts/dev-all.mjs",
+    "build": "node build.mjs",
+    "test": "playwright install chromium && node scripts/e2e-scenarios.mjs",
+    "test:e2e": "playwright install chromium && node scripts/e2e-flow.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "playwright": "^1.63.0"
+  }
+}

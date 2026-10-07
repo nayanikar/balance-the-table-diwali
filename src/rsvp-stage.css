@@ -1,0 +1,48 @@
+@import "./rsvp-card-shell.css";
+
+.rsvp-stage {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  max-width: none;
+}
+
+.rsvp-stage > rsvp-attendance[hidden],
+.rsvp-stage > balance-the-table[hidden],
+.rsvp-stage > event-details[hidden] {
+  display: none !important;
+}
+
+.rsvp-stage > rsvp-attendance.step-exiting,
+.rsvp-stage > balance-the-table.step-exiting {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.985);
+  transition:
+    opacity 0.65s ease,
+    transform 0.65s ease;
+  pointer-events: none;
+}
+
+.rsvp-stage > balance-the-table.step-entering,
+.rsvp-stage > event-details.step-entering {
+  animation: rsvp-step-in 0.7s ease both;
+}
+
+@keyframes rsvp-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp-stage > rsvp-attendance.step-exiting,
+  .rsvp-stage > balance-the-table.step-exiting {
+    transition: none;
+  }
+
+  .rsvp-stage > balance-the-table.step-entering,
+  .rsvp-stage > event-details.step-entering {
+    animation: none;
+  }
+}

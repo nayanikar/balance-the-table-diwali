@@ -1,0 +1,84 @@
+.fg-limb {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fg-limb.thin {
+  stroke-width: 1.4;
+}
+
+.fg-body,
+.fg-head {
+  fill: var(--card);
+  stroke: var(--ink);
+  stroke-width: 2.2;
+}
+
+.fg-scribble {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+
+.fg-foot,
+.fg-hand {
+  fill: var(--ink);
+}
+
+.fg-mine .fg-body,
+.fg-mine .fg-head {
+  fill: var(--hl);
+}
+
+.fg-hat {
+  fill: var(--sav);
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.fg-pom {
+  fill: var(--swt);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.fg-sweat {
+  fill: #8fc6e8;
+  stroke: var(--ink);
+  stroke-width: 0.9;
+}
+
+.fg-motion {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+
+.fg-spark {
+  fill: none;
+  stroke: var(--hl);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.fg-stool rect {
+  fill: #e9c993;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+}
+
+.fg-stool path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  opacity: 0.6;
+}

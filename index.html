@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Balance the Table</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/rsvp-stage.css">
+  <style>
+    :root {
+      --ink: #3d1212;
+      --page-bg: #2a0c0c;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background-color: var(--page-bg);
+      color: var(--ink);
+      font-family: "Patrick Hand", system-ui, sans-serif;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      padding: 0 16px 48px;
+    }
+    html { overflow-y: auto; }
+    #fireworks {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #rsvp {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="fireworks" aria-hidden="true"></canvas>
+
+<form id="rsvp">
+  <section class="rsvp-card" id="rsvpCard">
+  <div class="rsvp-stage" id="stage" data-step="1">
+    <rsvp-attendance
+      id="rsvp1"
+      event-id="diwali-2026"
+      step-label="RSVP · step 1 of 3">
+    </rsvp-attendance>
+    <balance-the-table
+      id="btt"
+      event-id="diwali-2026"
+      step-label="RSVP · step 2 of 3"
+      hidden>
+    </balance-the-table>
+    <event-details
+      id="details3"
+      event-id="diwali-2026"
+      step-label="RSVP · step 3 of 3"
+      allergies-note="Any allergies?"
+      hidden>
+    </event-details>
+  </div>
+  </section>
+</form>
+
+<script type="module">
+  import { startFireworks } from './src/fireworks.js';
+  import './src/rsvp-attendance.js';
+  import './src/balance-the-table.js';
+  import './src/event-details.js';
+  import {
+    startBoot,
+    refreshBoot,
+    handlePostResult,
+    rsvpAsSomeoneElse,
+  } from './src/boot.js';
+
+  const stage = document.getElementById('stage');
+  const rsvpCard = document.getElementById('rsvpCard');
+  const fw = startFireworks(document.getElementById('fireworks'), {
+    preset: 'calm',
+    avoid: rsvpCard,
+    avoidPad: 40,
+    clickToLaunch: true,
+  });
+
+  let festiveTimer = 0;
+  let finaleTimer = 0;
+  let step2Timer = 0;
+
+  const rsvp1 = document.getElementById('rsvp1');
+  const btt = document.getElementById('btt');
+  const details3 = document.getElementById('details3');
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function setStep(n) {
+    stage.dataset.step = String(n);
+    rsvp1.hidden = n !== 1;
+    btt.hidden = n !== 2;
+    details3.hidden = n !== 3;
+  }
+
+  function syncDetails3() {
+    const c = btt.getCompletion();
+    if (c) details3.setCompletion(c);
+  }
+
+  function goToStep3WithFinale() {
+    syncDetails3();
+    clearTimeout(finaleTimer);
+    const fadeMs = reduceMotion ? 0 : 650;
+
+    fw.set({ preset: 'finale' });
+    finaleTimer = setTimeout(() => fw.set({ preset: 'calm' }), 2500);
+    setStep(3);
+
+    const finishEnter = () => {
+      details3.classList.add('step-entering');
+      btt.classList.remove('step-exiting');
+      setTimeout(() => details3.classList.remove('step-entering'), 750);
+    };
+
+    if (fadeMs === 0) {
+      finishEnter();
+      return;
+    }
+
+    btt.classList.add('step-exiting');
+    setTimeout(finishEnter, fadeMs);
+  }
+
+  function goToStep2AfterName() {
+    clearTimeout(festiveTimer);
+    clearTimeout(step2Timer);
+    fw.set({ preset: 'festive' });
+    festiveTimer = setTimeout(() => fw.set({ preset: 'calm' }), 4000);
+    const fadeMs = reduceMotion ? 0 : 650;
+
+    setStep(2);
+    rsvp1.refreshPanel?.();
+    btt.refreshUi?.();
+
+    const finishEnter = () => {
+      btt.classList.add('step-entering');
+      rsvp1.classList.remove('step-exiting');
+      setTimeout(() => btt.classList.remove('step-entering'), 750);
+    };
+
+    if (fadeMs === 0) {
+      finishEnter();
+      return;
+    }
+
+    rsvp1.classList.add('step-exiting');
+    step2Timer = setTimeout(finishEnter, fadeMs);
+  }
+
+  const ctx = await startBoot({
+    stage,
+    rsvp1,
+    btt,
+    details3,
+    setStep,
+    fw,
+  });
+
+  rsvp1.addEventListener('rsvp:status', (e) => {
+    const { status, guestName } = e.detail;
+    if (status === 'attending' && guestName) goToStep2AfterName();
+  });
+
+  rsvp1.addEventListener('rsvp:committed', async (e) => {
+    const { data, status } = e.detail;
+    if (data) handlePostResult(ctx, data);
+    await refreshBoot(ctx);
+    if (status === 'declined') {
+      setStep(1);
+      return;
+    }
+    if (status === 'attending') goToStep2AfterName();
+  });
+
+  rsvp1.addEventListener('rsvp:not-you', async () => {
+    await rsvpAsSomeoneElse(ctx);
+    setStep(1);
+    rsvp1.applyBoot({
+      event: ctx.lastBoot?.event,
+      me: null,
+      state: ctx.lastBoot?.event?.state ?? 'open',
+      guestId: ctx.guestId,
+    });
+  });
+
+  rsvp1.addEventListener('rsvp:step-next', () => {
+    if (rsvp1.getStatus() === 'attending') goToStep2AfterName();
+  });
+
+  btt.addEventListener('btt:gap-narrowed', () => fw.burst?.());
+
+  btt.addEventListener('btt:complete', (e) => {
+    details3.setCompletion(e.detail);
+    void refreshBoot(ctx).then(() => goToStep3WithFinale());
+  });
+
+  btt.addEventListener('btt:saved', (e) => {
+    if (e.detail) handlePostResult(ctx, e.detail);
+  });
+
+  document.addEventListener('btt:server-state', (e) => {
+    handlePostResult(ctx, { ok: false, state: e.detail?.state });
+  });
+
+  btt.addEventListener('btt:back', () => {
+    rsvp1.beginChangeRsvp();
+    setStep(1);
+  });
+
+  details3.addEventListener('details:back', () => {
+    setStep(2);
+    btt.refreshUi?.();
+  });
+
+  details3.addEventListener('details:change-rsvp', () => {
+    rsvp1.beginChangeRsvp();
+    setStep(1);
+  });
+
+  window.__bttWired = true;
+
+  document.addEventListener('sync:status', (e) => {
+    const msg = e.detail?.message;
+    if (!msg) return;
+    let el = document.getElementById('sync-status');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'sync-status';
+      el.style.cssText =
+        'text-align:center;color:#fff8eb;font-family:Patrick Hand,sans-serif;margin:4px auto;';
+      document.getElementById('rsvp')?.prepend(el);
+    }
+    el.textContent = msg;
+    if (!e.detail.pending) el.remove();
+  });
+</script>
+</body>
+</html>

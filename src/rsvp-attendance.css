@@ -1,0 +1,36 @@
+@import "./card-shared.css";
+@import "./figure-styles.css";
+
+.hero .wire {
+  fill: none;
+  stroke-width: 2.2;
+}
+
+.hero .bulb {
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+
+.hero .bulb-a {
+  fill: #ffd54f;
+}
+
+.hero .bulb-b {
+  fill: #c62828;
+}
+
+.hero .bulb-c {
+  fill: #c9941a;
+}
+
+.hero .bulb-d {
+  fill: #6b1a1a;
+}
+
+.hero .bulb-e {
+  fill: #ff8f00;
+}
+
+.hero .spark {
+  opacity: 0.55;
+}

@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Balance the Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e8dfcc;--card:#fbf6ea;--ink:#2a2420;--muted:#7a6f63;--sav:#e58a5c;--swt:#f2a7bd;--hl:#f6d35b;--acc2:#b8433f;}
+[data-theme=riso]{--bg:#efe6d2;--card:#fffaf0;--ink:#2338a0;--muted:#5f6cb3;--sav:#ff7a54;--swt:#ff9acb;--hl:#ffd93f;--acc2:#2338a0;}
+[data-theme=chalk]{--bg:#1d2622;--card:#2f3f37;--ink:#f1ede2;--muted:#b5c0b2;--sav:#e7a37c;--swt:#efb9cb;--hl:#f4dc85;--acc2:#f1ede2;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Patrick Hand",ui-rounded,system-ui,sans-serif;font-size:18px;min-height:100vh;transition:background .3s}
+
+/* prototype controls */
+.proto{max-width:760px;margin:0 auto;padding:14px 16px 4px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;color:var(--muted)}
+.proto b{font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;margin-right:4px}
+.proto .grp{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.proto button{font:inherit;color:var(--ink);background:transparent;border:1px solid color-mix(in srgb,var(--ink) 25%,transparent);border-radius:999px;padding:3px 9px;cursor:pointer}
+.proto button[aria-pressed=true]{background:var(--ink);color:var(--card)}
+.proto .tag{width:100%;font-size:11px;opacity:.8}
+
+/* the card */
+.card{position:relative;max-width:440px;margin:10px auto 40px;background:var(--card);border-radius:6px;padding:26px 20px 24px;box-shadow:0 1px 0 rgba(0,0,0,.05),0 14px 40px -18px rgba(0,0,0,.35);overflow:hidden;transition:background .3s}
+.card::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;background-image:radial-gradient(color-mix(in srgb,var(--ink) 12%,transparent) .6px,transparent .7px);background-size:5px 5px}
+.step{font-family:ui-sans-serif,system-ui,sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:center}
+h1{font-family:"Caveat",cursive;font-weight:700;font-size:44px;line-height:1;text-align:center;margin:6px 0 0;letter-spacing:.02em}
+.squig{display:block;margin:2px auto 8px;width:170px;height:10px}
+.sub{text-align:center;margin:0 auto;max-width:300px;color:var(--muted);line-height:1.3}
+
+svg.balance{display:block;width:100%;height:auto;overflow:visible;margin:4px 0 0}
+.ln{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.thin{stroke-width:1.4}
+.solid{fill:var(--card);stroke:var(--ink);stroke-width:2.2;stroke-linejoin:round}
+.inkfill{fill:var(--ink)}
+.side-label{font-family:"Caveat",cursive;font-weight:700;font-size:22px;fill:var(--ink);text-anchor:middle;letter-spacing:.08em}
+.dish .f{fill:var(--c);stroke:var(--ink);stroke-width:1.8;stroke-linejoin:round}
+.dish .f2{fill:var(--acc2);stroke:var(--ink);stroke-width:1.4}
+.dish .l{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dish .dots{stroke-width:3.4}
+.dish .hole{fill:var(--card);stroke:var(--ink);stroke-width:1.6}
+.halo{fill:var(--hl);opacity:0}
+.mine .halo{opacity:.85;animation:pulse 1.2s ease-in-out infinite}
+.mine.settled .halo{animation:none;opacity:.45}
+@keyframes pulse{50%{opacity:.35;transform:scale(1.15)}}
+.halo{transform-box:fill-box;transform-origin:center}
+.pop{animation:pop .35s cubic-bezier(.3,1.8,.5,1)}
+@keyframes pop{0%{transform:scale(.4)}100%{transform:scale(1)}}
+.burst line{stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+.burst{animation:burst .8s ease-out forwards}
+@keyframes burst{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(1.5)}}
+.more{font-family:"Caveat",cursive;font-size:18px;fill:var(--muted);text-anchor:middle}
+
+/* panel below the balance */
+.panel{min-height:150px;text-align:center;position:relative}
+.label{font-family:"Caveat",cursive;font-weight:700;font-size:30px;margin:2px 0 10px}
+.choices{display:flex;gap:14px;justify-content:center}
+.btn{font:inherit;font-size:20px;color:var(--ink);background:var(--card);cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 18px 8px 10px;border:2.2px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:3px 3px 0 var(--ink);transition:transform .08s,box-shadow .08s;letter-spacing:.06em}
+.btn:hover{transform:translate(-1px,-1px) rotate(-1deg);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn:focus-visible,.link:focus-visible,input:focus-visible{outline:3px solid var(--hl);outline-offset:3px}
+.btn svg{width:34px;height:34px}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.pick{margin:14px auto 0;max-width:340px}
+.pk-l{display:block;font-size:15px;color:var(--muted);margin-bottom:6px}
+.pk{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.pk button{width:46px;height:46px;padding:4px;background:transparent;cursor:pointer;border:2px solid transparent;border-radius:50% 45% 50% 42%/45% 50% 42% 50%;transition:transform .1s}
+.pk button:hover{transform:rotate(-6deg) scale(1.08)}
+.pk button[aria-checked=true]{border-color:var(--ink);background:color-mix(in srgb,var(--hl) 60%,transparent)}
+.pk button:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+.pk svg{width:100%;height:100%}
+.cheer{font-family:"Caveat",cursive;font-size:26px;margin:0 0 6px}
+.q{display:block;margin:0 0 8px;font-size:19px}
+.field{display:flex;gap:8px;max-width:330px;margin:0 auto}
+input{flex:1;min-width:0;font:inherit;font-size:19px;color:var(--ink);background:transparent;border:0;border-bottom:2.2px dashed var(--ink);padding:6px 4px}
+input::placeholder{color:var(--muted);opacity:.8}
+.btn.small{font-size:17px;padding:6px 14px}
+.link{font:inherit;background:none;border:0;color:var(--muted);cursor:pointer;margin-top:12px;text-decoration:underline wavy color-mix(in srgb,var(--muted) 60%,transparent);text-underline-offset:4px}
+.done h2{font-family:"Caveat",cursive;font-weight:700;font-size:34px;margin:4px 0 4px;letter-spacing:.04em}
+.done p{margin:0 auto;max-width:290px;line-height:1.3}
+.fade{animation:fade .35s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+
+/* menu */
+.menu{margin-top:20px;border-top:2px dashed color-mix(in srgb,var(--ink) 30%,transparent);padding-top:12px}
+.menu h3{font-family:ui-sans-serif,system-ui,sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:center;margin:0 0 8px;font-weight:600}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}
+.cols ul{list-style:none;margin:0;padding:0}
+.cols li{display:flex;align-items:center;gap:6px;font-size:16.5px;line-height:1.25;padding:2px 4px;border-radius:4px}
+.cols li svg{width:24px;height:24px;flex:none}
+.cols li.tbd{color:var(--muted);font-style:italic}
+.cols li.you{background:color-mix(in srgb,var(--hl) 55%,transparent)}
+.cols .hd{font-family:"Caveat",cursive;font-weight:700;font-size:20px;letter-spacing:.08em;margin-bottom:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:420px){h1{font-size:38px}.btn{font-size:18px;padding:7px 14px 7px 8px}}
+</style>
+</head>
+<body data-theme="ink">
+
+<div class="proto" aria-label="Prototype controls">
+  <span class="tag">Prototype controls — not part of the guest UI</span>
+  <div class="grp"><b>Table</b>
+    <button data-seed="sweet" aria-pressed="true">Sweet-heavy 2·6</button>
+    <button data-seed="even">Even 4·4</button>
+    <button data-seed="sav">Savoury-heavy 5·2</button>
+    <button data-seed="empty">Empty</button>
+  </div>
+  <div class="grp"><b>Lines</b>
+    <button id="boilBtn" aria-pressed="true">Wobbly</button>
+  </div>
+</div>
+
+<main class="card">
+  <div class="step">RSVP · step 2 of 3</div>
+  <h1>Balance the Table</h1>
+  <svg class="squig" viewBox="0 0 170 10" aria-hidden="true"><path class="ln thin" d="M4 6 Q 20 1 36 6 T 68 6 T 100 6 T 132 6 T 166 5"/></svg>
+  <p class="sub" id="sub">Help us build the potluck table. Pick what you feel like bringing.</p>
+
+  <svg class="balance" id="bal" viewBox="-240 -95 480 290" role="img" aria-labelledby="balDesc">
+    <title id="balDesc">The potluck table</title>
+    <defs>
+      <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="2"/>
+        <feDisplacementMap in="SourceGraphic" scale="2.6"/>
+      </filter>
+    </defs>
+    <g filter="url(#rough)">
+      <!-- table + stand -->
+      <path class="ln" d="M-215 182 H215"/>
+      <path class="ln thin" d="M-200 182 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0 q 12 10 24 0" opacity=".55"/>
+      <path class="solid" d="M-6 6 L-30 168 Q0 162 30 168 L6 6 Z"/>
+      <path class="solid" d="M-46 182 Q-44 166 -30 166 H30 Q44 166 46 182 Z"/>
+      <!-- pans -->
+      <g id="panL"></g>
+      <g id="panR"></g>
+      <!-- beam -->
+      <g id="beam">
+        <path class="solid" d="M-160 -5 Q0 -8 160 -5 L160 5 Q0 7 -160 5 Z"/>
+        <circle class="inkfill" cx="-152" cy="0" r="3.2"/><circle class="inkfill" cx="152" cy="0" r="3.2"/>
+      </g>
+      <circle class="solid" cx="0" cy="0" r="9"/><circle class="inkfill" cx="0" cy="0" r="3"/>
+    </g>
+    <g id="fx"></g>
+  </svg>
+  <p class="sr" aria-live="polite" id="live"></p>
+
+  <section class="panel" id="panel" aria-live="polite"></section>
+
+  <section class="menu" aria-label="What's on the table">
+    <h3>On the table so far</h3>
+    <div class="cols">
+      <ul id="listSav"></ul>
+      <ul id="listSwt"></ul>
+    </div>
+  </section>
+</main>
+
+<script>
+const ICONS = {
+  bowl:`<path class="f" d="M5 20H35C35 30 28 35 20 35S5 30 5 20Z"/><path class="l" d="M14 15q-3-4 0-8M20 16q-3-4 0-8M26 15q-3-4 0-8"/><path class="l" d="M10 25q10 4 20 0"/>`,
+  dumpling:`<path class="f" d="M4 33C6 16 34 16 36 33Z"/><path class="l" d="M12 26l2-4M20 23v-4M28 26l-2-4"/>`,
+  samosa:`<path class="f" d="M5 34L20 9L35 34Z"/><path class="l" d="M20 10L18 33M11 25l6 1"/>`,
+  pot:`<path class="f" d="M7 19H33V30Q33 35 28 35H12Q7 35 7 30Z"/><path class="l" d="M3 22H7M33 22H37M10 19Q20 12 30 19"/><circle class="l" cx="20" cy="12" r="2"/>`,
+  slice:`<path class="f" d="M5 34H35V19L5 27Z"/><path class="l" d="M5 31L35 26"/><circle class="f2" cx="29" cy="15" r="3.4"/>`,
+  cookie:`<circle class="f" cx="20" cy="25" r="11"/><path class="l dots" d="M16 21h.1M24 22h.1M17 29h.1M25 29h.1M21 25h.1"/>`,
+  donut:`<ellipse class="f" cx="20" cy="26" rx="13" ry="9"/><ellipse class="hole" cx="20" cy="25" rx="4" ry="2.4"/><path class="l" d="M11 23l2-1M27 22l2 1M14 30l2 1M25 30l2-1M19 20h2"/>`,
+  pudding:`<path class="f" d="M9 34L12 19H28L31 34Z"/><path class="f2" d="M12 19H28L27.4 23Q25.5 26 23.6 23Q21.8 26 20 23Q18.2 26 16.4 23Q14.5 26 12.6 23Z"/>`,
+  skewer:`<path class="l" d="M4 33L36 9"/><rect class="f" x="9" y="22" width="7" height="7" rx="1.5" transform="rotate(-37 12.5 25.5)"/><rect class="f" x="16.5" y="16.5" width="7" height="7" rx="1.5" transform="rotate(-37 20 20)"/><rect class="f" x="24" y="11" width="7" height="7" rx="1.5" transform="rotate(-37 27.5 14.5)"/>`,
+  pizza:`<path class="f" d="M6 13Q20 7 34 13L20 36Z"/><path class="l" d="M7 16Q20 10 33 16"/><circle class="f2" cx="17" cy="20" r="2.2"/><circle class="f2" cx="23" cy="25" r="2"/>`,
+  icecream:`<path class="f" d="M12 20L20 36L28 20Z"/><path class="l" d="M14 24l8 4M16 28l6 3"/><circle class="f" cx="20" cy="15" r="7.5"/>`,
+  cupcake:`<path class="f" d="M10 24H30L27 35H13Z"/><path class="f" d="M9 24C8 15 32 15 31 24Z"/><circle class="f2" cx="20" cy="13" r="2.6"/><path class="l" d="M16 27l1 6M20 27v6M24 27l-1 6"/>`,
+  cloche:`<path class="f" d="M7 31C7 17 33 17 33 31Z"/><path class="l" d="M4 33H36M12 26q2-4 6-5"/><circle class="f" cx="20" cy="15.5" r="2.2"/>`
+};
+const RULES = {
+  sav:[[/momo|dumpling|gyoza|dim ?sum|bao|wonton/i,'dumpling'],[/samosa|pakor|empanada|spring roll|kachori|puff/i,'samosa'],[/tikka|kebab|kabab|satay|skewer/i,'skewer'],[/pizza|flatbread|focaccia/i,'pizza'],[/curry|paneer|stew|chil+i|korma|masala|dal|chole|rajma|butter chicken/i,'pot'],[/noodle|ramen|soup|pho|biryani|rice|pulao|salad|pasta|bowl|khichdi/i,'bowl']],
+  swt:[[/ice ?cream|kulfi|gelato|sorbet/i,'icecream'],[/cupcake|muffin/i,'cupcake'],[/cake|tiramisu|pie|tart|pastry|cheesecake/i,'slice'],[/cookie|biscuit|brownie|lad+o+|barfi|fudge/i,'cookie'],[/donut|doughnut|jalebi|gulab|churro/i,'donut'],[/pudding|flan|kheer|rasmalai|custard|mousse|halwa|ice ?cream|trifle|panna/i,'pudding']]
+};
+const DEFAULTS = {sav:['bowl','dumpling','pot','samosa'], swt:['slice','cookie','pudding','donut']};
+const PALETTE = {sav:['bowl','pot','dumpling','samosa','skewer','pizza'], swt:['slice','cookie','donut','pudding','icecream','cupcake']};
+function iconFor(side,name,i){
+  if(!name) return 'cloche';
+  for(const [re,ic] of RULES[side]) if(re.test(name)) return ic;
+  let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))|0;
+  return DEFAULTS[side][Math.abs(h)%4];
+}
+const SEEDS = {
+  sweet:{sav:['Biryani','Momos'], swt:['Tiramisu','Cookies','Rasmalai',null,'Gulab jamun','Brownies']},
+  even:{sav:['Biryani','Momos','Paneer tikka','Hakka noodles'], swt:['Tiramisu','Cookies','Rasmalai',null]},
+  sav:{sav:['Biryani','Momos','Paneer tikka','Hakka noodles','Samosas'], swt:['Tiramisu',null]},
+  empty:{sav:[], swt:[]}
+};
+const S = {sav:[], swt:[], phase:'intro', mine:null, seed:'sweet'};
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s=>document.querySelector(s);
+const ARM=152, HANG=96, MAX=13;
+
+function load(seed){
+  S.seed=seed; S.mine=null; S.phase='intro';
+  for(const side of ['sav','swt']) S[side]=SEEDS[seed][side].map((n,i)=>({name:n,side,icon:iconFor(side,n,i)}));
+  ang = target(); vel=0; drawPans(); renderPanel(); renderMenu();
+}
+function counted(side){ return S[side].filter(d=>!(d.mine && !d.landed)).length }
+function target(){ const d=counted('swt')-counted('sav'); return MAX*Math.tanh(d/3) }
+
+/* ---------- balance drawing ---------- */
+function panSVG(side){
+  const items=S[side], vis=items.slice(-12), extra=items.length-vis.length;
+  let pile='';
+  vis.forEach((d,i)=>{
+    const row=Math.floor(i/4), inRow=Math.min(4,vis.length-row*4), col=i%4;
+    const x=(col-(inRow-1)/2)*33 + (row%2?6:0), y=HANG-1-row*27;
+    const r=((i*37+(side==='swt'?11:3))%13)-6;
+    const fall = d.mine && !d.landed ? (d.fy||0) : 0;
+    pile+=`<g class="dish${d.mine?' mine':''}${d.mine&&S.phase==='done'?' settled':''}" style="--c:var(--${side})" data-mine="${d.mine?1:0}" transform="translate(${x} ${y+fall}) rotate(${r})">
+      ${d.mine?'<ellipse class="halo" cx="0" cy="-15" rx="23" ry="20"/>':''}
+      <g class="${d.pop?'pop':''}" transform="scale(1) translate(-20 -35)">${ICONS[d.icon]}</g></g>`;
+  });
+  const label = side==='sav'?'SAVOURY':'SWEET';
+  return `<path class="ln thin" d="M0 0 L-58 ${HANG}M0 0 L58 ${HANG}"/>
+    <circle class="inkfill" cx="0" cy="0" r="3"/>
+    ${pile}
+    <path class="solid" d="M-68 ${HANG} Q0 ${HANG+30} 68 ${HANG} Z"/>
+    ${extra>0?`<text class="more" x="0" y="${HANG-92}">+${extra} more</text>`:''}
+    <text class="side-label" x="0" y="${HANG+48}">${label}</text>`;
+}
+function drawPans(){ $('#panL').innerHTML=panSVG('sav'); $('#panR').innerHTML=panSVG('swt'); S.sav.concat(S.swt).forEach(d=>d.pop=false); place(); }
+let ang=0, vel=0;
+function place(){
+  const a=ang*Math.PI/180, cx=ARM*Math.cos(a), cy=ARM*Math.sin(a);
+  $('#beam').setAttribute('transform',`rotate(${ang})`);
+  $('#panL').setAttribute('transform',`translate(${-cx} ${-cy})`);
+  $('#panR').setAttribute('transform',`translate(${cx} ${cy})`);
+}
+function tick(){
+  const t=target();
+  if(reduce){ ang=t; vel=0; } else { vel += (t-ang)*0.045; vel *= 0.9; ang += vel; }
+  place(); requestAnimationFrame(tick);
+}
+
+/* falling dish */
+function drop(d){
+  if(reduce){ d.landed=true; drawPans(); return afterLand(d); }
+  const start=performance.now(), dur=720, from=-250;
+  const ease=t=>{const n=7.5625,k=2.75; if(t<1/k)return n*t*t; if(t<2/k)return n*(t-=1.5/k)*t+.75; if(t<2.5/k)return n*(t-=2.25/k)*t+.9375; return n*(t-=2.625/k)*t+.984375};
+  let landed=false;
+  (function f(now){
+    const t=Math.min(1,(now-start)/dur);
+    d.fy = from*(1-ease(t));
+    if(!landed && t>0.36){ landed=true; d.landed=true; vel += (d.side==='swt'?1:-1)*1.6; afterLand(d); }
+    if(landed) d.fy = from*(1-ease(t));
+    drawPans();
+    if(t<1) requestAnimationFrame(f); else { d.fy=0; drawPans(); }
+  })(start);
+}
+function afterLand(d){
+  const before = Math.abs((counted('swt')-(d.side==='swt'?1:0)) - (counted('sav')-(d.side==='sav'?1:0)));
+  const after = Math.abs(counted('swt')-counted('sav'));
+  if(after<before) burst(d.side);
+  $('#live').textContent = `Your dish joined the ${d.side==='sav'?'savoury':'sweet'} side.`;
+}
+function burst(side){
+  const a=ang*Math.PI/180, s=side==='swt'?1:-1, x=s*ARM*Math.cos(a), y=s*ARM*Math.sin(a)+HANG-30;
+  let lines=''; for(let i=0;i<8;i++){const th=i*Math.PI/4; lines+=`<line x1="${Math.cos(th)*52}" y1="${Math.sin(th)*44}" x2="${Math.cos(th)*64}" y2="${Math.sin(th)*54}"/>`}
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('transform',`translate(${x} ${y})`);
+  g.innerHTML=`<g class="burst" style="transform-box:fill-box;transform-origin:center">${lines}</g>`;
+  $('#fx').appendChild(g); setTimeout(()=>g.remove(),900);
+}
+
+/* ---------- panel states ---------- */
+const btnIcon=(ic,side)=>`<svg viewBox="0 0 40 40" aria-hidden="true"><g class="dish" style="--c:var(--${side})">${ICONS[ic]}</g></svg>`;
+function renderPanel(){
+  const p=$('#panel'), empty=!S.sav.length&&!S.swt.length;
+  $('#sub').textContent = S.phase==='done' ? '' : (empty && !S.mine ? "You're the first dish on the table. Pick what you feel like bringing." : 'Help us build the potluck table. Pick what you feel like bringing.');
+  $('#sub').style.display = S.phase==='done'?'none':'';
+  if(S.phase==='intro'){
+    p.innerHTML=`<div class="fade"><div class="label">Your move.</div>
+      <div class="choices">
+        <button class="btn" data-pick="sav">${btnIcon('pot','sav')}SAVOURY</button>
+        <button class="btn" data-pick="swt">${btnIcon('slice','swt')}SWEET</button>
+      </div></div>`;
+  } else if(S.phase==='naming'){
+    const word=S.mine.side==='sav'?'savoury':'sweet';
+    p.innerHTML=`<div class="fade"><p class="cheer">Perfect. Another dish joins the table.</p>
+      <label class="q" for="dish">What ${word} goodness are you thinking?</label>
+      <form class="field" id="f"><input id="dish" autocomplete="off" placeholder="Type your dish here…" maxlength="40"><button class="btn small" type="submit">Add</button></form>
+      <div class="pick"><span class="pk-l">Pick its doodle</span><div class="pk" role="radiogroup" aria-label="Pick a doodle for your dish">${PALETTE[S.mine.side].map(ic=>`<button type="button" role="radio" aria-checked="false" aria-label="${ic}" data-ic="${ic}">${btnIcon(ic,S.mine.side)}</button>`).join('')}</div></div>
+      <button class="link" data-later>Not sure yet? Decide later.</button></div>`;
+    setTimeout(()=>$('#dish')?.focus({preventScroll:true}),750);
+  } else {
+    p.innerHTML=`<div class="fade done"><h2>YOU'RE ON THE TABLE ✦</h2>
+      <p>Can't wait to see you — and whatever delicious thing you bring.</p>
+      <button class="link" data-change>Change my dish</button></div>`;
+  }
+}
+function renderMenu(){
+  for(const side of ['sav','swt']){
+    const el=side==='sav'?$('#listSav'):$('#listSwt');
+    const word=side==='sav'?'savoury':'sweet';
+    el.innerHTML=`<li class="hd">${side==='sav'?'Savoury':'Sweet'}</li>`+S[side].map(d=>{
+      const nm=d.name?esc(d.name):`something ${word}…`;
+      return `<li class="${d.name?'':'tbd'} ${d.mine?'you':''}">${btnIcon(d.icon,side)}<span>${nm}${d.mine?' <small>(you)</small>':''}</span></li>`}).join('')
+      + (S[side].length?'':`<li class="tbd">nothing yet</li>`);
+  }
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+document.addEventListener('click',e=>{
+  const pick=e.target.closest('[data-pick]');
+  if(pick && S.phase==='intro'){
+    const side=pick.dataset.pick, d={name:null,side,icon:'cloche',mine:true,landed:false,fy:-250};
+    S[side].push(d); S.mine=d; S.manual=false; S.phase='naming';
+    document.querySelectorAll('[data-pick]').forEach(b=>b.disabled=true);
+    renderMenu(); drop(d); setTimeout(renderPanel, reduce?0:650);
+  }
+  const ic=e.target.closest('[data-ic]');
+  if(ic && S.mine){ S.manual=true; setIcon(ic.dataset.ic); }
+  if(e.target.closest('[data-later]')) finish(null);
+  if(e.target.closest('[data-change]')){
+    const d=S.mine; S[d.side]=S[d.side].filter(x=>x!==d); S.mine=null; S.phase='intro';
+    drawPans(); renderPanel(); renderMenu();
+  }
+  const seed=e.target.closest('[data-seed]');
+  if(seed){ document.querySelectorAll('[data-seed]').forEach(b=>b.setAttribute('aria-pressed',b===seed)); load(seed.dataset.seed); }
+  const th=e.target.closest('[data-theme-btn]');
+  if(th){ document.querySelectorAll('[data-theme-btn]').forEach(b=>b.setAttribute('aria-pressed',b===th)); document.body.dataset.theme=th.dataset.themeBtn; }
+});
+document.addEventListener('submit',e=>{ e.preventDefault(); const v=$('#dish').value.trim(); finish(v||null); });
+// live preview: the covered dish becomes whatever they type
+document.addEventListener('input',e=>{
+  if(e.target.id!=='dish'||!S.mine) return;
+  if(S.manual) return;
+  const v=e.target.value.trim(); setIcon(v?iconFor(S.mine.side,v):'cloche', true);
+});
+function setIcon(ic, auto){
+  if(ic!==S.mine.icon){ S.mine.icon=ic; S.mine.pop=true; drawPans(); }
+  document.querySelectorAll('[data-ic]').forEach(b=>b.setAttribute('aria-checked', b.dataset.ic===ic));
+}
+function finish(name){
+  const d=S.mine; d.name=name; d.icon=name?(S.manual||d.icon!=='cloche'?d.icon:iconFor(d.side,name)):'cloche'; S.manual=false; d.pop=true; S.phase='done';
+  drawPans(); renderPanel(); renderMenu();
+  setTimeout(()=>{ if(S.mine===d) drawPans(); }, 2600);
+}
+
+/* hand-drawn "line boil" */
+let boil=true, seedN=2;
+setInterval(()=>{ if(boil && !reduce){ seedN=(seedN%4)+1; $('#turb').setAttribute('seed',seedN); } },160);
+$('#boilBtn').onclick=e=>{ boil=!boil; e.target.setAttribute('aria-pressed',boil); e.target.textContent=boil?'Wobbly':'Still'; };
+
+load('sweet'); requestAnimationFrame(tick);
+</script>
+</body>
+</html>
